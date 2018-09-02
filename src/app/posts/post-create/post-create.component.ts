@@ -3,9 +3,9 @@
 // 2.- Crear el componente con su selector y su referencia al template
 // 3.- Crear una clase para exportar los metodos javascrips creados.
 
-import { Component, EventEmitter, Output } from "@angular/core";
+import { Component } from "@angular/core";
 import { NgForm } from "@angular/forms";
-import { Post } from "../post.models";
+import { PostsService } from "../posts.services";
 
 @Component({
     selector: 'app-post-create',
@@ -17,17 +17,15 @@ export class PostCreateComponent {
     enteredValue = '';
     enteredTitle = '';
 
-    @Output() postCreated = new EventEmitter<Post>();
+    constructor(public postsService: PostsService) { }
 
     onAddPost(form: NgForm) {
-        if (form.invalid){
+        if (form.invalid) {
             return;
         }
-        const post: Post = { 
-            title: form.value.title, 
-            content: form.value.content
-        }
-        this.postCreated.emit(post);
+
+        this.postsService.addPost(form.value.title, form.value.content);
+        form.resetForm();
     }
 }
 
