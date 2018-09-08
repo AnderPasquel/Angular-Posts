@@ -1,5 +1,7 @@
 import { Component, OnInit, OnDestroy } from "@angular/core";
+import { PageEvent } from "@angular/material";
 import { Subscription } from "rxjs";
+
 import { Post } from "../post.models";
 import { PostsService } from "../posts.services";
 
@@ -9,26 +11,45 @@ import { PostsService } from "../posts.services";
     styleUrls: ['./post-list.component.css']
 })
 
-export class PostListComponent implements OnInit, OnDestroy{
-    
+export class PostListComponent implements OnInit, OnDestroy {
+
     posts: Post[] = [];
+    isLoading = false;
+    totalPosts = 0;
+    postsPerPage = 2;
+    currentPage = 1;
+    pageSizeOptions = [1, 2, 5, 10];
     private postsSub: Subscription;
 
-    constructor(public postsService: PostsService) {}
-    
-    ngOnInit(){
-        this.postsService.getPosts();
+    constructor(public postsService: PostsService) { }
+
+    ngOnInit() {
+        this.isLoading = true;
+        this.postsService.getPosts(this.postsPerPage, this.currentPage);
         this.postsSub = this.postsService.getPostUpdateListener()
-            .subscribe((posts: Post[])=>{
-                this.posts = posts;
+            .subscribe((postData: {posts: Post[], postCount: number}) => {
+                this.isLoading = false;
+                this.totalPosts = postData.postCount;
+                this.posts = postData.posts;
             });
     }
 
-    onDelete(postTd: string){
-        this.postsService.deletePost(postTd);
+    onChangedPage(pageData: PageEvent) {
+        console.log(pageData);
+        this.isLoading = true;
+        this.currentPage = pageData.pageIndex + 1;
+        this.postsPerPage = pageData.pageSize;
+        this.postsService.getPosts(this.postsPerPage, this.currentPage);
     }
 
-    ngOnDestroy(){
+    onDelete(postTd: string) {
+        this.isLoading = true;
+        this.postsService.deletePost(postTd).subscribe(()=>{
+            this.postsService.getPosts(this.postsPerPage, this.currentPage);
+        });
+    }
+
+    ngOnDestroy() {
         this.postsSub.unsubscribe();
     }
 
